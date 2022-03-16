@@ -50,11 +50,7 @@ def odes(y, t):
     bL = rL * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)) - KSL * (L / (Xf + L)) * (O / (KO2 + O))
     qS = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) / YXS + (O / (KO1 * Xf + O)) * (S / (KS + S)) * mS + ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC))) / YCS + (aL * (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) + bL) / YLS
 
-    FS = (qS * Xf + FB * S / V) * (V / (SF - S))  # Glucose Feed Rate (L/h)
-    if S<20:
-        S = 20
-    elif S>=20:
-        FS = 0
+    FS = 0 if S>20 else (qS * Xf + FB * S / V) * (V / (SF - S))  # Glucose Feed Rate (L/h)
     D = (FB + FS) / V
 
     dXfdt = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) * Xf - D * Xf
@@ -69,7 +65,7 @@ def odes(y, t):
     qE = aE * (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) + bE
     dEdt = qE * Xf - D * E
 
-    dSdt = -qS * Xf - FS / V * SF - D * S
+    dSdt = (-qS * Xf - (FB * S/V)) if S>20 else 0
 
     qN = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) / YXN
     dNdt = qN * Xf + D * N
@@ -117,7 +113,8 @@ V = y[:, 7]
 L = LE + E
 X = Xf + L
 
-EPA_Biomass = E*100/X
+EPA_percent_Biomass = E * 100 / X
+Lipid_percent_Biomass = L*100/X
 
 #Plotting X
 plt.figure()
@@ -125,14 +122,6 @@ plt.title("Biomass(Unit/L)")
 plt.ylabel("X")
 plt.xlabel("t")
 plt.plot(t, X)
-plt.draw()
-
-#Plotting L
-plt.figure()
-plt.title("lipid")
-plt.ylabel("L")
-plt.xlabel("t")
-plt.plot(t, L)
 plt.draw()
 
 #Plotting S
@@ -148,7 +137,21 @@ plt.figure()
 plt.title("N vs t")
 plt.ylabel("N")
 plt.xlabel("t")
-plt.plot(t, S)
+plt.plot(t, N)
+plt.draw()
+
+#Plotting EPA(% Biomass)
+plt.figure()
+plt.title("EPA(% Biomass)")
+plt.xlabel("time(h)")
+plt.plot(t, EPA_percent_Biomass)
+plt.draw()
+
+#Plotting lipid(% Biomass)
+plt.figure()
+plt.title("lipid(% Biomass)")
+plt.xlabel("time(h)")
+plt.plot(t, Lipid_percent_Biomass)
 plt.draw()
 
 plt.show()
