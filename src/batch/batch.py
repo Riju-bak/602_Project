@@ -1,5 +1,6 @@
 from scipy.integrate import odeint
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import os
@@ -44,7 +45,7 @@ def odes(y, t):
     N = y[6]
     V = y[7]
 
-    ########## ODE Definitions #####################
+    # ########## ODE Definitions #####################
     FB = V / 1000 * (7.14 / YXN * (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) * Xf + 1.59 * ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC))) * Xf)
 
     bL = rL * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)) - KSL * (L / (Xf + L)) * (O / (KO2 + O))
@@ -68,15 +69,19 @@ def odes(y, t):
     dSdt = (-qS * Xf - (FB * S/V)) if S>20 else 0
 
     qN = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) / YXN
-    dNdt = qN * Xf + D * N
+    dNdt = -qN * Xf - D * N
 
     dVdt = FS + FB
 
-    qO2 = -(1.07 * qS - 1.37 * (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) - 2.86 * (aL * (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) + bL) - 1.45 * ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC))))
+    # TODO: Fix OUR
+    mu = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)))
+    Bc = ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
+                KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)))
+    qO2 = -(1.07 * qS - 1.37 * mu - 2.86 * (aL * mu + bL) - 1.45 * Bc)
     OUR = 31.25 * qO2 * Xf
-
-    return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt]
 ###############################################################################################################################################
+
+    return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt, OUR]
 
 load_dotenv()
 
@@ -88,9 +93,10 @@ L0 = float(os.environ.get("L0"))
 E0 = float(os.environ.get("E0"))
 LE0 = float(os.environ.get("LE0"))
 C0 = float(os.environ.get("C0"))
+OUR0 = float(os.environ.get("OUR0"))
 
 # Initial Conditions
-y0 = [X0, C0, L0, LE0, E0, S0, N0, V0]
+y0 = [X0, C0, L0, LE0, E0, S0, N0, V0, OUR0]
 
 # Test ODEs
 # print(odes(y=y0, t=0))
@@ -107,14 +113,21 @@ E = y[:, 4]
 S = y[:, 5]
 N = y[:, 6]
 V = y[:, 7]
+OUR = y[:, 8]
 
 # EPA_titer = E/X*100
-# EPA_prod = E/t where t=effective fermentation time
+EFT = 120 # Effective fermentation time(h)
+EPA_prod = np.diff(E)/np.diff(t)
+EPA_prod = np.insert(EPA_prod, 0, 0.0, axis=0)
+
 L = LE + E
-X = Xf + L
+X = Xf + L #Biomass (Unit/L)
 
 EPA_percent_Biomass = E * 100 / X
 Lipid_percent_Biomass = L*100/X
+EPA_percent_Lipid = E*100/L
+
+
 
 #Plotting X
 plt.figure()
@@ -122,6 +135,41 @@ plt.title("Biomass(Unit/L)")
 plt.ylabel("X")
 plt.xlabel("t")
 plt.plot(t, X)
+plt.draw()
+
+#Plotting lipid(% Biomass)
+plt.figure()
+plt.title("lipid(% Biomass)")
+plt.xlabel("time(h)")
+plt.plot(t, Lipid_percent_Biomass)
+plt.draw()
+
+#Plotting OUR
+plt.figure()
+plt.title("OUR(mmol/L/h)")
+plt.xlabel("time(h)")
+plt.plot(t, OUR)
+plt.draw()
+
+#Plotting EPA(% Liquid)
+plt.figure()
+plt.title("EPA(% Liquid)")
+plt.xlabel("time(h)")
+plt.plot(t, EPA_percent_Lipid)
+plt.draw()
+
+#Plotting EPA(% Biomass)
+plt.figure()
+plt.title("EPA(% Biomass)")
+plt.xlabel("time(h)")
+plt.plot(t, EPA_percent_Biomass)
+plt.draw()
+
+#Plotting EPA_prod(unit/L/h)
+plt.figure()
+plt.title("EPA_prod(Unit/L/h)")
+plt.xlabel("time(h)")
+plt.plot(t, EPA_prod)
 plt.draw()
 
 #Plotting S
@@ -138,20 +186,6 @@ plt.title("N vs t")
 plt.ylabel("N")
 plt.xlabel("t")
 plt.plot(t, N)
-plt.draw()
-
-#Plotting EPA(% Biomass)
-plt.figure()
-plt.title("EPA(% Biomass)")
-plt.xlabel("time(h)")
-plt.plot(t, EPA_percent_Biomass)
-plt.draw()
-
-#Plotting lipid(% Biomass)
-plt.figure()
-plt.title("lipid(% Biomass)")
-plt.xlabel("time(h)")
-plt.plot(t, Lipid_percent_Biomass)
 plt.draw()
 
 plt.show()
