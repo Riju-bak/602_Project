@@ -71,19 +71,6 @@ FB = sol[FB]
 from scipy import stats
 from scipy import optimize
 
-# OLD ##########
-# def equations(vars):
-#     S, N, Xf, L, E, C  = vars
-#     eq4 = Xf*(-F+(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))*V)
-#     eq5 = FS*SF - F*S - ((mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))/YXS + (O/(KO1*Xf+O))*(S/(KS+S))*mS + ((1-rL)*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)))/YCS + (aL*(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))+(rL*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)) - KSL*(L/Xf+L)*(O/(KO2+O))))/YLS)*Xf*V
-#     eq6 = FS*NF - F*N - ((mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))/YXN)*Xf*V
-#     eq7 = -F*L + (aL*(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)) + (rL*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)) - KSL*(L/Xf+L)*(O/(KO2+O))))*Xf*V
-#     eq8 = -F*E + (aE*(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)) + (rE*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC))*(O/(KO2+O)) - KSE*(E/Xf+L)*(O/(KO2+O))))*Xf*V
-#     eq9 = L - C
-# #eq9 = -F*C + (1.88*(1-rL)*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)))*Xf*V
-#     return (eq4, eq5, eq6, eq7, eq8, eq9)
-#### OLD #############
-
 
 def equations(vars):
     S, N, Xf, L, E, C = vars
@@ -102,31 +89,9 @@ def equations(vars):
     eq6 = FS*NF - F*N - qN*Xf*V
     eq7 = -F*L + qL*Xf*V
     eq8 = -F*E + qE*Xf*V
-    eq9 = -F*C + qC*Xf*V
-    return eq4, eq5, eq6, eq7, eq8, eq9
-
-# def equations(vars):
-#     S, N, Xf, L, E, C = vars
-#
-#     bL = rL * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)) - KSL * (L / (Xf + L)) * (O / (KO2 + O))
-#     m = (mmax * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)))
-#     qS = m / YXS + (
-#                 O / (KO1 * Xf + O)) * (S / (KS + S)) * mS + ((1 - rL) * (
-#                 bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
-#                     KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC))) / YCS + (aL * m + bL) / YLS
-#     qL = aL * m + bL
-#     bE = rE * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * (
-#                 (KiC - C / Xf) / KiC)) * (O / (KO2 + O)) - KSE * (E / (Xf + L)) * (O / (KO2 + O))
-#     qE = aE * (mmax * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) + bE
-#     qN = (mmax * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) / YXN
-#     qC = (1.88 * (1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)))
-#     eq4 = -F*Xf + m*Xf*V
-#     eq5 = FS*SF - F*S - qS*Xf*V
-#     eq6 = FS*NF - F*N - qN*Xf*V
-#     eq7 = -F*L + qL*Xf*V
-#     eq8 = -F*E + qE*Xf*V
-#     eq9 = -F*C + qC*Xf*V
-#     return eq4, eq5, eq6, eq7, eq8, eq9
+    # eq9 = -F*C + qC*Xf*V
+    eq9 = L - C
+    return [eq4, eq5, eq6, eq7, eq8, eq9]
 
 def f(vars):
     print("############ ITERATION ##############")
@@ -135,16 +100,22 @@ def f(vars):
     print("####################################")
     return sum(np.array(equations(vars)) ** 2)
 
-f_op_one = optimize.fmin(f, (3.3, 0.05, 100.0, 70.0, 30.0, 60.0))
+f_op_one = optimize.fmin(f, (3.3, 0.05, 100.0, 70.0, 30.0, 60.0), xtol=1e-4, maxiter=10000)
 S, N, Xf, L, E, C =  optimize.fsolve(equations, f_op_one)
-
-#Result Validation
-print(Xf*(-F+(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))*V))
-print(FS*SF - F*S - ((mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))/YXS + (O/(KO1*Xf+O))*(S/(KS+S))*mS + ((1-rL)*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)))/YCS + (aL*(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))+(rL*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)) - KSL*(L/Xf+L)*(O/(KO2+O))))/YLS)*Xf*V)
-print(FS*NF - F*N - ((mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX))/YXN)*Xf*V)
-print(-F*L + (aL*(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)) + (rL*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC)) - KSL*(L/Xf+L)*(O/(KO2+O))))*Xf*V)
-print(-F*E + (aE*(mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)) + (rE*(bCmax*1/(1+N/KiN)*(O/(KO2+O))*(S/(KS+S))*1/(1+S/KiS)*1/(1+Xf/KiX)*(1-C/Xf/KiC))*(O/(KO2+O)) - KSE*(E/Xf+L)*(O/(KO2+O))))*Xf*V)
-print(L-C)
-
+# S, N, Xf, L, E, C = f_op_one
 
 print("S = ", S, " N = ", N, " Xf = ", Xf," L = ", L, " E = ", E, " C = ", C,  )
+
+# EPA_titer = E/X*100
+EFT = V/F # Effective fermentation time(h)
+EPA_prod = E/EFT
+
+X = Xf + L
+EPA_percent_Biomass = E * 100 / X
+Lipid_percent_Biomass = L*100/X
+EPA_percent_Lipid = E*100/L
+
+print("EPA_percent_Biomass: ", EPA_percent_Biomass)
+print("Lipid_percent_Biomass: ", Lipid_percent_Biomass)
+print("EPA_percent_Lipid: ", EPA_percent_Lipid)
+print("EPA_productivity: ", EPA_prod)
