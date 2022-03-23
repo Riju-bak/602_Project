@@ -1,8 +1,9 @@
-from scipy.integrate import odeint
-import numpy as np
-import matplotlib.pyplot as plt
 import os
+
+import matplotlib.pyplot as plt
+import numpy as np
 from dotenv import load_dotenv
+from scipy.integrate import solve_ivp
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -48,7 +49,7 @@ C0 = float(os.environ.get("C0"))
 
 # OUR0 = float(os.environ.get("OUR0"))
 
-def odes(y, t):
+def odes(t, y):
     # assign each ODE to a vector elem
     Xf = y[0]
     C = y[1]
@@ -107,16 +108,20 @@ y0 = [X0, C0, L0, LE0, E0, S0, N0, V0]
 T = 144  # Total batch operation time(h)
 T_split = 10000
 t = np.linspace(0, T, T_split)
-y = odeint(odes, y0, t)
+t_span = (0, T)
+solver_methods = ['RK45', 'RK23', 'DOP853', 'Radau', 'BDF', 'LSODA']
+print("Choose Solver method: \n0)RK45\n1)RK23\n2)DOP853\n3)Radau\n4)BDF\n5)LSODA")
+solve_ivp_method = solver_methods[int(input("Choice: "))]
+y = solve_ivp(odes, t_span, y0, t_eval=t, method=solve_ivp_method)
 
-Xf = y[:, 0]
-C = y[:, 1]
-L = y[:, 2]
-LE = y[:, 3]
-E = y[:, 4]
-S = y[:, 5]
-N = y[:, 6]
-V = y[:, 7]
+Xf = y.y[0, :]
+C = y.y[1, :]
+L = y.y[2, :]
+LE = y.y[3, :]
+E = y.y[4, :]
+S = y.y[5, :]
+N = y.y[6, :]
+V = y.y[7, :]
 # OUR = y[:, 8]
 
 # EPA_titer = E/X*100
@@ -126,12 +131,11 @@ EPA_prod = np.insert(EPA_prod, 0, 0.0, axis=0)
 
 # Validate EPA_prod final value
 y_T = []
-for col in range(len(y[0])):
-    y_arr = y[:, col]
+for y_arr in y.y:
     y_T.append(y_arr[-1])
-print("EPA_prod_final= ", odes(y_T, t)[4])
-print("EPA_prod_final= ", odes([Xf[-1], C[-1], L[-1], LE[-1], E[-1], \
-                                S[-1], N[-1], V[-1]], t)[4])
+print("EPA_prod_final= ", odes(t, y_T)[4])
+print("EPA_prod_final= ", odes(t, [Xf[-1], C[-1], L[-1], LE[-1], E[-1], \
+                                S[-1], N[-1], V[-1]])[4])
 #####################
 
 L = LE + E
@@ -195,7 +199,7 @@ plt.draw()
 
 #Plotting EPA_prod(unit/L/h)
 plt.figure()
-plt.title("EPA_prod(Unit/L/h)")
+plt.title("EPA_productivity (Unit/L/h)")
 plt.xlabel("time(h)")
 plt.plot(t, EPA_prod)
 plt.draw()
