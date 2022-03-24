@@ -141,6 +141,10 @@ EPA_percent_Biomass = E * 100 / X
 Lipid_percent_Biomass = L*100/X
 EPA_percent_Lipid = E*100/L
 
+#EPA produced per amount of S consumed (unit/g)
+EPA_yield = (E[-1]-E[0])/(S[0]-S[-1])
+print("EPA_yield: ", EPA_yield)
+
 # OUR calculation
 # mu = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)))
 # Bc = ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
@@ -158,7 +162,7 @@ EPA_percent_Lipid = E*100/L
 #####################################################
 
 #Plotting X
-plt.figure()
+plt.figure("Biomass(Unit/L)")
 plt.title("Biomass(Unit/L)")
 plt.ylabel("X")
 plt.xlabel("t")
@@ -166,7 +170,7 @@ plt.plot(t, X)
 plt.draw()
 
 #Plotting lipid(% Biomass)
-plt.figure()
+plt.figure("lipid(% Biomass)")
 plt.title("lipid(% Biomass)")
 plt.xlabel("time(h)")
 plt.plot(t, Lipid_percent_Biomass)
@@ -180,28 +184,28 @@ plt.draw()
 # plt.draw()
 
 #Plotting EPA(% Liquid)
-plt.figure()
+plt.figure("EPA(% Liquid)")
 plt.title("EPA(% Liquid)")
 plt.xlabel("time(h)")
 plt.plot(t, EPA_percent_Lipid)
 plt.draw()
 
 #Plotting EPA(% Biomass)
-plt.figure()
+plt.figure("EPA(% Biomass)")
 plt.title("EPA(% Biomass)")
 plt.xlabel("time(h)")
 plt.plot(t, EPA_percent_Biomass)
 plt.draw()
 
 #Plotting EPA_prod(unit/L/h)
-plt.figure()
+plt.figure("EPA_prod(Unit/L/h)")
 plt.title("EPA_prod(Unit/L/h)")
 plt.xlabel("time(h)")
 plt.plot(t, EPA_prod)
 plt.draw()
 
 #Plotting S
-plt.figure()
+plt.figure("S vs t")
 plt.title("S vs t")
 plt.ylabel("S")
 plt.xlabel("t")
@@ -209,7 +213,7 @@ plt.plot(t, S)
 plt.draw()
 
 #Plotting N
-plt.figure()
+plt.figure("N vs t")
 plt.title("N vs t")
 plt.ylabel("N")
 plt.xlabel("t")
@@ -217,7 +221,7 @@ plt.plot(t, N)
 plt.draw()
 
 # Plotting E
-plt.figure()
+plt.figure("E vs t")
 plt.title("E vs t")
 plt.ylabel("E")
 plt.xlabel("t")
