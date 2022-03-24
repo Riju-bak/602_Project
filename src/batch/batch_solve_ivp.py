@@ -145,6 +145,10 @@ EPA_percent_Biomass = E * 100 / X
 Lipid_percent_Biomass = L*100/X
 EPA_percent_Lipid = E*100/L
 
+#EPA produced per amount of S consumed (unit/g)
+EPA_yield = (E[-1]-E[0])/(S[0]-S[-1])
+print("EPA_yield: ", EPA_yield)
+
 # OUR calculation
 # mu = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)))
 # Bc = ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
