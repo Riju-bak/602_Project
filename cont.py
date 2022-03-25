@@ -91,7 +91,7 @@ for a in range (1, n+1, 1):
         return (eq1, eq2, eq3, eq4, eq5, eq6, eq7)
     def f(vars):
         return abs(np.array(sum(equations(vars))**2)-0)
-    FB, S, N, Xf, L, E, C =  optimize.fsolve(equations, (optimize.fmin(f, (0.02, 0.05, 0.01, 150, 100, 56, 100), xtol=0.0001, maxiter=1000)))
+    FB, S, N, Xf, L, E, C = optimize.fsolve(equations, (optimize.fmin(f, (0.02, 0.05, 0.01, 150, 100, 56, 100), xtol=0.0001, maxiter=1000)))
     df.loc[a, 'FB'], df.loc[a, 'S'], df.loc[a, 'N'], df.loc[a, 'Xf'], df.loc[a, 'L'], df.loc[a, 'E'], df.loc[a, 'C'] = FB, S, N, Xf, L, E, C
     m = mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))
     bLC = bCmax*(KiN/(KiN+N))*(O/(KO2+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))*((KiC - (C/Xf))/KiC)
@@ -119,14 +119,14 @@ for a in range (1, n+1, 1):
     EPA_rel_yield = EPA_yield*100/batch_yield
     EPA_in_Lipid = E*100/L
     Lipid_content = L*100/(Xf+L)
-    A = ['Stage', 'Effective time','EPA Titer', 'EPA Rate', 'EPA Yield','EPA in Lipid', 'Lipid Content' ]
+    A = ['Stage', 't','EPA Titer', 'EPA Rate', 'EPA Yield','EPA in Lipid', 'Lipid Content' ]
     B = [stage, t, EPA_titer, EPA_rate, EPA_rel_yield, EPA_in_Lipid, Lipid_content]
     result.append((dict(zip(A, B))))
 results = pd.DataFrame(result)
 
 # Overall result
 t = df['V'].sum()/F
-EPA_titer = E/(Xf+L)
+EPA_titer = E*100/(Xf+L)
 EPA_rel_yield = results['EPA Yield'].mean()
 EPA_in_Lipid = E*100/L
 Lipid_content = L*100/(Xf+L)
@@ -137,15 +137,17 @@ for a in range (1, n+1, 1):
     sum_EPA_rate = sum_EPA_rate + EPA_rate
 EPA_rate = sum_EPA_rate/df['V'].sum()
 
-overall = {'Stage': 'Overall', 'Effective time':t, 'EPA Titer':EPA_titer, 'EPA Rate':EPA_rate, 'EPA Yield':EPA_rel_yield,'EPA in Lipid':EPA_in_Lipid, 'Lipid Content':Lipid_content}
+overall = {'Stage': 'Overall', 't':t, 'EPA Titer':EPA_titer, 'EPA Rate':EPA_rate, 'EPA Yield':EPA_rel_yield,'EPA in Lipid':EPA_in_Lipid, 'Lipid Content':Lipid_content}
 results = results.append(overall, ignore_index=True)
 
-results = np.round(results, decimals = 5)
-df = np.round(df, decimals = 5)
-print(df)
+
+df = np.round(df, decimals = 4)
+results = np.round(results, decimals = 2)
+print(" ")
+print(" ")
+print(df[['D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']])
+print(" ")
 print(" ")
 print(results)
-
-
 
 #Batch yield calculation: E/(FS*SF*t-S) = (0.15)
