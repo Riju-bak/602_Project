@@ -33,6 +33,7 @@ O = 25
 
 # n-stage
 data = []
+result = []
 for a in range (0, n+1):
     if a == 0:
         SF = 0
@@ -44,7 +45,7 @@ for a in range (0, n+1):
         L = 0
         E = 0
         C = 0 
-        F = 0
+        FB = 0
     else:
         print("Inputs for stage {}".format(a))
         SF = float(input("Glucose Concentration in Feed {} (g/L): ".format(a)))
@@ -57,10 +58,12 @@ for a in range (0, n+1):
             VRatio = float(input("Volume Ratio V{}/V{}: ".format(a, a-1)))
             V = V*VRatio
             F = V*D
-    name = ['SF', 'D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']
-    value = [SF, D, V, S, N, Xf, L, E, C]
+    name = ['FB', 'SF', 'D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']
+    value = [FB, SF, D, V, S, N, Xf, L, E, C]
     data.append((dict(zip(name, value))))
 df = pd.DataFrame(data)
+
+batch_yield = float(input("STD Batch conversion yield: "))
 
      #Solve Non-linear Equations
 for a in range (1, n+1, 1):     
@@ -88,15 +91,61 @@ for a in range (1, n+1, 1):
         return (eq1, eq2, eq3, eq4, eq5, eq6, eq7)
     def f(vars):
         return abs(np.array(sum(equations(vars))**2)-0)
-    FB, S, N, Xf, L, E, C =  optimize.fsolve(equations, (optimize.fmin(f, (0.02, 0.095, 0.01, 150, 100, 56, 100), xtol=0.01, maxiter=1000)))
-    df.loc[a, 'S'], df.loc[a, 'N'], df.loc[a, 'Xf'], df.loc[a, 'L'], df.loc[a, 'E'], df.loc[a, 'C'] = S, N, Xf, L, E, C
-df = np.round(df, decimals = 2)
+    FB, S, N, Xf, L, E, C =  optimize.fsolve(equations, (optimize.fmin(f, (0.02, 0.05, 0.01, 150, 100, 56, 100), xtol=0.0001, maxiter=1000)))
+    df.loc[a, 'FB'], df.loc[a, 'S'], df.loc[a, 'N'], df.loc[a, 'Xf'], df.loc[a, 'L'], df.loc[a, 'E'], df.loc[a, 'C'] = FB, S, N, Xf, L, E, C
+    m = mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))
+    bLC = bCmax*(KiN/(KiN+N))*(O/(KO2+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))*((KiC - (C/Xf))/KiC)
+    bC = (1-rL)*bLC
+    bL = rL*bLC - KSL*(L/(Xf+L))*(O/(KO2+O))
+    bE = rE*bLC*(O/(KO2+O)) - KSE*(E/(Xf+L))*(O/(KO2+O))
+    qS = m/YXS + (O/(KO1*Xf + O))*(S/(KS + S))*mS + bC/YCS + (aL*m + bL)/YLS
+    qN = m/YXN
+    qL = aL*m + bL
+    qE = aE*m + bE
+    qC = 1.88*(1-rL)*bLC
+    FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
+    F = df.loc[(a), 'D']*df.loc[(a), 'V']
+    qO2 = -(1.07*qS - 1.37*m - 2.86*(aL*m+bL) - 1.45*bC)
+    OUR = 31.25*qO2*Xf
+    FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
+    #print("OUR of stage ", a, "(mmol/h): ", OUR)
+
+    #Evaluation results
+    stage = a
+    t = 1/df.loc[(a), 'D']
+    EPA_titer = E/(Xf+L)
+    EPA_rate = E/t
+    EPA_yield = (-F*df.loc[(a-1), 'E'] + F*E)/(F*df.loc[(a-1), 'S'] + FS*df.loc[(a), 'SF'] - F*S)
+    EPA_rel_yield = EPA_yield*100/batch_yield
+    EPA_in_Lipid = E*100/L
+    Lipid_content = L*100/(Xf+L)
+    A = ['Stage', 'Effective time','EPA Titer', 'EPA Rate', 'EPA Yield','EPA in Lipid', 'Lipid Content' ]
+    B = [stage, t, EPA_titer, EPA_rate, EPA_rel_yield, EPA_in_Lipid, Lipid_content]
+    result.append((dict(zip(A, B))))
+results = pd.DataFrame(result)
+
+# Overall result
+t = df['V'].sum()/F
+EPA_titer = E/(Xf+L)
+EPA_rel_yield = results['EPA Yield'].mean()
+EPA_in_Lipid = E*100/L
+Lipid_content = L*100/(Xf+L)
+
+sum_EPA_rate = 0
+for a in range (1, n+1, 1):
+    EPA_rate = df.loc[a, 'V']*results.loc[(a-1), 'EPA Rate']
+    sum_EPA_rate = sum_EPA_rate + EPA_rate
+EPA_rate = sum_EPA_rate/df['V'].sum()
+
+overall = {'Stage': 'Overall', 'Effective time':t, 'EPA Titer':EPA_titer, 'EPA Rate':EPA_rate, 'EPA Yield':EPA_rel_yield,'EPA in Lipid':EPA_in_Lipid, 'Lipid Content':Lipid_content}
+results = results.append(overall, ignore_index=True)
+
+results = np.round(results, decimals = 5)
+df = np.round(df, decimals = 5)
 print(df)
+print(" ")
+print(results)
 
-#Evaluation Results 
-t = (df['V'].sum()) / (D*V)
-EPA_titer = E*100/(Xf+L)
-EPA_rate = E/t
 
-print("EPA titer: ", round(EPA_titer))
-print("EPA_rate: ", round(EPA_rate))
+
+#Batch yield calculation: E/(FS*SF*t-S) = (0.15)
