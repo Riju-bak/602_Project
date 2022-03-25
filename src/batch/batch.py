@@ -1,8 +1,9 @@
-from scipy.integrate import odeint
+from scipy.integrate import odeint, simpson
 import numpy as np
 import matplotlib.pyplot as plt
 import os
 from dotenv import load_dotenv
+from utils.get_ind import find_ind_val
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -47,6 +48,13 @@ C0 = float(os.environ.get("C0"))
 
 
 # OUR0 = float(os.environ.get("OUR0"))
+
+# def find_ind_val(arr, val):
+#     for i in range(len(arr)):
+#         if abs(arr[i]-val)<0.01:
+#             return i
+#     return -1
+
 
 def odes(y, t):
     # assign each ODE to a vector elem
@@ -94,18 +102,19 @@ def odes(y, t):
 
     ###############################################################################################################################################
 
-    return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt]
+    return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt, qS*Xf]
 
 
 # Initial Conditions
-y0 = [X0, C0, L0, LE0, E0, S0, N0, V0]
+#NOTE: qSXf(t=0) = 0
+y0 = [X0, C0, L0, LE0, E0, S0, N0, V0, 0]
 
 # Test ODEs
 # print(odes(y=y0, t=0))
 
 # declare a time vector(time window)
 T = 144  # Total batch operation time(h)
-T_split = 10000
+T_split = 100000
 t = np.linspace(0, T, T_split)
 y = odeint(odes, y0, t)
 
@@ -117,22 +126,11 @@ E = y[:, 4]
 S = y[:, 5]
 N = y[:, 6]
 V = y[:, 7]
-# OUR = y[:, 8]
+
 
 # EPA_titer = E/X*100
 EFT = 120 # Effective fermentation time(h)
-EPA_prod = np.diff(E)/np.diff(t)
-EPA_prod = np.insert(EPA_prod, 0, 0.0, axis=0)
-
-# Validate EPA_prod final value
-y_T = []
-for col in range(len(y[0])):
-    y_arr = y[:, col]
-    y_T.append(y_arr[-1])
-print("EPA_prod_final= ", odes(y_T, t)[4])
-print("EPA_prod_final= ", odes([Xf[-1], C[-1], L[-1], LE[-1], E[-1], \
-                                S[-1], N[-1], V[-1]], t)[4])
-#####################
+EPA_prod = (E - E[0])/(t - t[0])
 
 L = LE + E
 X = Xf + L #Biomass (Unit/L)
@@ -142,24 +140,17 @@ Lipid_percent_Biomass = L*100/X
 EPA_percent_Lipid = E*100/L
 
 #EPA produced per amount of S consumed (unit/g)
-EPA_yield = (E[-1]-E[0])/(S[0]-S[-1])
+qSXf_integrated = y[:, 8]
+S_20_ind = find_ind_val(S, 20)
+qSXf = np.diff(qSXf_integrated)/np.diff(t)
+qsXf_extra = qSXf[S_20_ind:]
+t_ = np.linspace(t[S_20_ind], T, len(qsXf_extra))
+S_consumed_extra = simpson(qSXf[S_20_ind:], t_)
+S_consumed = (S[0]-20) + S_consumed_extra
+EPA_produced = (E[-1]-E[0])
+EPA_yield = EPA_produced/S_consumed
 print("EPA_yield: ", EPA_yield)
-
-# OUR calculation
-# mu = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)))
-# Bc = ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
-#         KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)))
-# bL = rL * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * (
-#             (KiC - C / Xf) / KiC)) - KSL * (L / (Xf + L)) * (O / (KO2 + O))
-# qS = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) / YXS + (
-#             O / (KO1 * Xf + O)) * (S / (KS + S)) * mS + ((1 - rL) * (
-#             bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * (
-#                 (KiC - C / Xf) / KiC))) / YCS + (aL * (
-#             mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
-#                 KiX / (KiX + Xf))) + bL) / YLS
-# qO2 = -(1.07 * qS - 1.37 * mu - 2.86 * (aL * mu + bL) - 1.45 * Bc)
-# OUR = 31.25 * qO2 * Xf
-#####################################################
+###################################################
 
 #Plotting X
 plt.figure("Biomass(Unit/L)")
@@ -175,13 +166,6 @@ plt.title("lipid(% Biomass)")
 plt.xlabel("time(h)")
 plt.plot(t, Lipid_percent_Biomass)
 plt.draw()
-
-#Plotting OUR
-# plt.figure()
-# plt.title("OUR(mmol/L/h)")
-# plt.xlabel("time(h)")
-# plt.plot(t, OUR)
-# plt.draw()
 
 #Plotting EPA(% Liquid)
 plt.figure("EPA(% Liquid)")

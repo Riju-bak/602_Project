@@ -1,9 +1,9 @@
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 from dotenv import load_dotenv
 from scipy.integrate import solve_ivp
+from utils import find_ind_val
 
 np.seterr(divide='ignore', invalid='ignore')
 
@@ -126,17 +126,7 @@ V = y.y[7, :]
 
 # EPA_titer = E/X*100
 EFT = 120 # Effective fermentation time(h)
-EPA_prod = np.diff(E)/np.diff(t)
-EPA_prod = np.insert(EPA_prod, 0, 0.0, axis=0)
-
-# Validate EPA_prod final value
-y_T = []
-for y_arr in y.y:
-    y_T.append(y_arr[-1])
-print("EPA_prod_final= ", odes(t, y_T)[4])
-print("EPA_prod_final= ", odes(t, [Xf[-1], C[-1], L[-1], LE[-1], E[-1], \
-                                S[-1], N[-1], V[-1]])[4])
-#####################
+EPA_prod = (E - E[0])/(t - t[0])
 
 L = LE + E
 X = Xf + L #Biomass (Unit/L)
@@ -146,24 +136,17 @@ Lipid_percent_Biomass = L*100/X
 EPA_percent_Lipid = E*100/L
 
 #EPA produced per amount of S consumed (unit/g)
-EPA_yield = (E[-1]-E[0])/(S[0]-S[-1])
+qSXf_integrated = y[:, 8]
+S_20_ind = find_ind_val(S, 20)
+qSXf = np.diff(qSXf_integrated)/np.diff(t)
+qsXf_extra = qSXf[S_20_ind:]
+t_ = np.linspace(t[S_20_ind], T, len(qsXf_extra))
+S_consumed_extra = simpson(qSXf[S_20_ind:], t_)
+S_consumed = (S[0]-20) + S_consumed_extra
+EPA_produced = (E[-1]-E[0])
+EPA_yield = EPA_produced/S_consumed
 print("EPA_yield: ", EPA_yield)
-
-# OUR calculation
-# mu = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)))
-# Bc = ((1 - rL) * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
-#         KiX / (KiX + Xf)) * ((KiC - C / Xf) / KiC)))
-# bL = rL * (bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * (
-#             (KiC - C / Xf) / KiC)) - KSL * (L / (Xf + L)) * (O / (KO2 + O))
-# qS = (mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf))) / YXS + (
-#             O / (KO1 * Xf + O)) * (S / (KS + S)) * mS + ((1 - rL) * (
-#             bCmax * (KiN / (KiN + N)) * (O / (KO2 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (KiX / (KiX + Xf)) * (
-#                 (KiC - C / Xf) / KiC))) / YCS + (aL * (
-#             mu_max * (N / (KN + N)) * (O / (KO1 + O)) * (S / (KS + S)) * (KiS / (KiS + S)) * (
-#                 KiX / (KiX + Xf))) + bL) / YLS
-# qO2 = -(1.07 * qS - 1.37 * mu - 2.86 * (aL * mu + bL) - 1.45 * Bc)
-# OUR = 31.25 * qO2 * Xf
-#####################################################
+###################################################
 
 #Plotting X
 plt.figure()
