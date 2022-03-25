@@ -69,6 +69,8 @@ batch_yield = float(input("STD Batch conversion yield: "))
 for a in range (1, n+1, 1):     
     def equations(vars):
         FB, S, N, Xf, L, E, C  = vars
+        
+        #Specific growth rates
         m = mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))
         bLC = bCmax*(KiN/(KiN+N))*(O/(KO2+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))*((KiC - (C/Xf))/KiC)
         bC = (1-rL)*bLC
@@ -79,20 +81,36 @@ for a in range (1, n+1, 1):
         qL = aL*m + bL
         qE = aE*m + bE
         qC = 1.88*(1-rL)*bLC
+        
+        #Feeds
         FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
         F = df.loc[(a), 'D']*df.loc[(a), 'V']
+        
+        #Equations
         eq1 = FB - ((df.loc[(a), 'V']/1000) * ((7.14/YXN)*m*Xf + 1.59*bC*Xf))
         eq2 = F*df.loc[(a-1), 'Xf'] - F*Xf + m*Xf*df.loc[(a), 'V']
         eq3 = F*df.loc[(a-1), 'S'] + FS*df.loc[(a), 'SF'] - F*S - qS*Xf*df.loc[(a), 'V']
-        eq4 = F*df.loc[(a-1), 'N'] + FS*NF - F*N - qN*Xf*df.loc[(a), 'V']
+        if a == 1:
+            eq4 = F*df.loc[(a-1), 'N'] + FS*NF - F*N - qN*Xf*df.loc[(a), 'V']
+        else:
+            eq4 =  F*df.loc[(a-1), 'N'] - F*N - qN*Xf*df.loc[(a), 'V']
         eq5 = F*df.loc[(a-1), 'L'] - F*L + qL*Xf*df.loc[(a), 'V']
         eq6 = F*df.loc[(a-1), 'E'] - F*E + qE*Xf*df.loc[(a), 'V']
         eq7 = F*df.loc[(a-1), 'C'] - F*C + qC*Xf*df.loc[(a), 'V']
         return (eq1, eq2, eq3, eq4, eq5, eq6, eq7)
+
     def f(vars):
         return abs(np.array(sum(equations(vars))**2)-0)
-    FB, S, N, Xf, L, E, C = optimize.fsolve(equations, (optimize.fmin(f, (0.02, 0.05, 0.01, 150, 100, 56, 100), xtol=0.0001, maxiter=1000)))
+
+    FB, S, N, Xf, L, E, C = optimize.fsolve(equations, (optimize.fmin(f, (0.01, 0.05, 0.01, 150, 100, 50, 100), xtol=0.0001, maxiter=1000)))
+    roots = FB, S, N, Xf, L, E, C
     df.loc[a, 'FB'], df.loc[a, 'S'], df.loc[a, 'N'], df.loc[a, 'Xf'], df.loc[a, 'L'], df.loc[a, 'E'], df.loc[a, 'C'] = FB, S, N, Xf, L, E, C
+    
+    #Validate results
+    print(equations(roots))
+    print(" ")
+    print(" ")
+    
     m = mmax*(N/(KN+N))*(O/(KO1+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))
     bLC = bCmax*(KiN/(KiN+N))*(O/(KO2+O))*(S/(KS+S))*(KiS/(KiS+S))*(KiX/(KiX+Xf))*((KiC - (C/Xf))/KiC)
     bC = (1-rL)*bLC
@@ -105,15 +123,17 @@ for a in range (1, n+1, 1):
     qC = 1.88*(1-rL)*bLC
     FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
     F = df.loc[(a), 'D']*df.loc[(a), 'V']
+    
+    #OUR
     qO2 = -(1.07*qS - 1.37*m - 2.86*(aL*m+bL) - 1.45*bC)
     OUR = 31.25*qO2*Xf
     FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
-    #print("OUR of stage ", a, "(mmol/h): ", OUR)
+    print("OUR of stage ", a, "(mmol/h): ", OUR)
 
     #Evaluation results
     stage = a
     t = 1/df.loc[(a), 'D']
-    EPA_titer = E/(Xf+L)
+    EPA_titer = E*100/(Xf+L)
     EPA_rate = E/t
     EPA_yield = (-F*df.loc[(a-1), 'E'] + F*E)/(F*df.loc[(a-1), 'S'] + FS*df.loc[(a), 'SF'] - F*S)
     EPA_rel_yield = EPA_yield*100/batch_yield
@@ -145,9 +165,18 @@ df = np.round(df, decimals = 4)
 results = np.round(results, decimals = 2)
 print(" ")
 print(" ")
+print(" ")
+print("Species Concentration")
 print(df[['D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']])
 print(" ")
 print(" ")
+print(" ")
+print("Evaluation results")
 print(results)
 
 #Batch yield calculation: E/(FS*SF*t-S) = (0.15)
+
+#Check equations
+#Check fsolve
+#Check yield
+#Check 3stage
