@@ -34,7 +34,8 @@ O = 25
 # n-stage
 data = []
 result = []
-for a in range (0, n+1):
+Scon = 0
+for a in range (0, n+1, 1):
     if a == 0:
         SF = 0
         D = 0
@@ -46,6 +47,7 @@ for a in range (0, n+1):
         E = 0
         C = 0 
         FB = 0
+        F = 0
     else:
         print("Inputs for stage {}".format(a))
         SF = float(input("Glucose Concentration in Feed {} (g/L): ".format(a)))
@@ -57,9 +59,10 @@ for a in range (0, n+1):
         else:
             VRatio = float(input("Volume Ratio V{}/V{}: ".format(a, a-1)))
             V = V*VRatio
-            F = V*D
-    name = ['FB', 'SF', 'D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']
-    value = [FB, SF, D, V, S, N, Xf, L, E, C]
+            print("Volume of stage {}-reactor = ". format(a), V)
+        F = V*D
+    name = ['F','FB', 'SF', 'D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']
+    value = [F, FB, SF, D, V, S, N, Xf, L, E, C]
     data.append((dict(zip(name, value))))
 df = pd.DataFrame(data)
 
@@ -83,30 +86,43 @@ for a in range (1, n+1, 1):
         qC = 1.88*(1-rL)*bLC
         
         #Feeds
-        FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
-        F = df.loc[(a), 'D']*df.loc[(a), 'V']
-        
+        F = df.loc[(a), 'F']
+        V = df.loc[(a), 'V']
+        D = df.loc[(a), 'D']
+        FS = D*V - FB/1000 #FB(mL/h)
+
         #Equations
-        eq1 = FB - ((df.loc[(a), 'V']/1000) * ((7.14/YXN)*m*Xf + 1.59*bC*Xf))
-        eq2 = F*df.loc[(a-1), 'Xf'] - F*Xf + m*Xf*df.loc[(a), 'V']
-        eq3 = F*df.loc[(a-1), 'S'] + FS*df.loc[(a), 'SF'] - F*S - qS*Xf*df.loc[(a), 'V']
+        eq1 = FB - (V) * ((7.14/YXN)*m*Xf + 1.59*bC*Xf) 
+        eq2 = df.loc[(a-1), 'F']*df.loc[(a-1), 'Xf'] - F*Xf + m*Xf*V
+        eq3 = df.loc[(a-1), 'F']*df.loc[(a-1), 'S'] + FS*df.loc[(a), 'SF'] - F*S - qS*Xf*V
         if a == 1:
-            eq4 = F*df.loc[(a-1), 'N'] + FS*NF - F*N - qN*Xf*df.loc[(a), 'V']
+            eq4 = df.loc[(a-1), 'F']*df.loc[(a-1), 'N'] + FS*NF - F*N - qN*Xf*V
         else:
-            eq4 =  F*df.loc[(a-1), 'N'] - F*N - qN*Xf*df.loc[(a), 'V']
-        eq5 = F*df.loc[(a-1), 'L'] - F*L + qL*Xf*df.loc[(a), 'V']
-        eq6 = F*df.loc[(a-1), 'E'] - F*E + qE*Xf*df.loc[(a), 'V']
-        eq7 = F*df.loc[(a-1), 'C'] - F*C + qC*Xf*df.loc[(a), 'V']
+            eq4 =  df.loc[(a-1), 'F']*df.loc[(a-1), 'N'] - F*N - qN*Xf*V
+        eq5 = df.loc[(a-1), 'F']*df.loc[(a-1), 'L'] - F*L + qL*Xf*V
+        eq6 = df.loc[(a-1), 'F']*df.loc[(a-1), 'E'] - F*E + qE*Xf*V
+        eq7 = df.loc[(a-1), 'F']*df.loc[(a-1), 'C'] - F*C + qC*Xf*V
         return (eq1, eq2, eq3, eq4, eq5, eq6, eq7)
 
     def f(vars):
         return abs(np.array(sum(equations(vars))**2)-0)
 
-    FB, S, N, Xf, L, E, C = optimize.fsolve(equations, (optimize.fmin(f, (0.01, 0.05, 0.01, 150, 100, 50, 100), xtol=0.0001, maxiter=1000)))
+    #Initial Guesses
+    IGuess1 = np.array([1, 0.05, 0.01, 150, 100, 50, 100])
+    IGuess2 = np.array([1, 0.05, 0.001, 70, 100, 50, 100])
+    if a in range (1, 3, 1):
+        FB, S, N, Xf, L, E, C = optimize.fsolve(equations, (optimize.fmin(f, IGuess1, xtol=0.01, maxiter=10000)))
+    else: 
+        FB, S, N, Xf, L, E, C = optimize.fsolve(equations, (optimize.fmin(f, IGuess2, xtol=0.01, maxiter=10000)))
+    
     roots = FB, S, N, Xf, L, E, C
     df.loc[a, 'FB'], df.loc[a, 'S'], df.loc[a, 'N'], df.loc[a, 'Xf'], df.loc[a, 'L'], df.loc[a, 'E'], df.loc[a, 'C'] = FB, S, N, Xf, L, E, C
     
     #Validate results
+    if a in range (1, 3, 1):
+        print(optimize.fmin(f, IGuess1, xtol=0.01, maxiter=10000))
+    else:
+        print(optimize.fmin(f, IGuess2, xtol=0.01, maxiter=10000))
     print(equations(roots))
     print(" ")
     print(" ")
@@ -121,33 +137,36 @@ for a in range (1, n+1, 1):
     qL = aL*m + bL
     qE = aE*m + bE
     qC = 1.88*(1-rL)*bLC
-    FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
-    F = df.loc[(a), 'D']*df.loc[(a), 'V']
     
+    F = df.loc[(a), 'F']
+    V = df.loc[(a), 'V']
+    D = df.loc[(a), 'D']
+    FS = D*V - FB/1000
+
     #OUR
     qO2 = -(1.07*qS - 1.37*m - 2.86*(aL*m+bL) - 1.45*bC)
     OUR = 31.25*qO2*Xf
-    FS = df.loc[(a), 'D']*df.loc[(a), 'V'] - FB
     print("OUR of stage ", a, "(mmol/h): ", OUR)
 
     #Evaluation results
     stage = a
-    t = 1/df.loc[(a), 'D']
+    t = 1/D
     EPA_titer = E*100/(Xf+L)
     EPA_rate = E/t
-    EPA_yield = (-F*df.loc[(a-1), 'E'] + F*E)/(F*df.loc[(a-1), 'S'] + FS*df.loc[(a), 'SF'] - F*S)
-    EPA_rel_yield = EPA_yield*100/batch_yield
+    Scon = Scon + FS*df.loc[(a), 'SF'] - F*S
     EPA_in_Lipid = E*100/L
     Lipid_content = L*100/(Xf+L)
-    A = ['Stage', 't','EPA Titer', 'EPA Rate', 'EPA Yield','EPA in Lipid', 'Lipid Content' ]
-    B = [stage, t, EPA_titer, EPA_rate, EPA_rel_yield, EPA_in_Lipid, Lipid_content]
+    A = ['Stage', 't','EPA Titer', 'EPA Rate', 'Scon','EPA in Lipid', 'Lipid Content' ]
+    B = [stage, t, EPA_titer, EPA_rate, Scon, EPA_in_Lipid, Lipid_content]
     result.append((dict(zip(A, B))))
 results = pd.DataFrame(result)
 
 # Overall result
 t = df['V'].sum()/F
 EPA_titer = E*100/(Xf+L)
-EPA_rel_yield = results['EPA Yield'].mean()
+
+EPA_rel_yield = (E*F/Scon)*(100/batch_yield)
+
 EPA_in_Lipid = E*100/L
 Lipid_content = L*100/(Xf+L)
 
@@ -157,7 +176,7 @@ for a in range (1, n+1, 1):
     sum_EPA_rate = sum_EPA_rate + EPA_rate
 EPA_rate = sum_EPA_rate/df['V'].sum()
 
-overall = {'Stage': 'Overall', 't':t, 'EPA Titer':EPA_titer, 'EPA Rate':EPA_rate, 'EPA Yield':EPA_rel_yield,'EPA in Lipid':EPA_in_Lipid, 'Lipid Content':Lipid_content}
+overall = {'Stage': 'Overall', 't':t, 'EPA Titer':EPA_titer, 'EPA Rate':EPA_rate,'EPA in Lipid':EPA_in_Lipid, 'Lipid Content':Lipid_content}
 results = results.append(overall, ignore_index=True)
 
 
@@ -167,16 +186,12 @@ print(" ")
 print(" ")
 print(" ")
 print("Species Concentration")
-print(df[['D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']])
+print(df)
+#print(df[['D', 'V', 'S', 'N', 'Xf', 'L', 'E', 'C']])
 print(" ")
 print(" ")
 print(" ")
 print("Evaluation results")
 print(results)
+print(EPA_rel_yield)
 
-#Batch yield calculation: E/(FS*SF*t-S) = (0.15)
-
-#Check equations
-#Check fsolve
-#Check yield
-#Check 3stage
