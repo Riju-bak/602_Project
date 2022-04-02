@@ -9,7 +9,7 @@ from .epa_yield import EPAYieldSolver
 np.seterr(divide='ignore', invalid='ignore')
 
 
-def batchIVPSolver(generate_report=False, solver_id=-1):
+def batchIVPSolver(generate_batch_result_report=False, generate_report=False, solver_id=-1):
     load_dotenv()
 
     # Kinetic Params
@@ -97,10 +97,10 @@ def batchIVPSolver(generate_report=False, solver_id=-1):
 
         ###############################################################################################################################################
 
-        return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt, qS * Xf]
+        return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt, FS]
 
     # Initial Conditions
-    # qS*Xf(t=0) = 0
+    # FS(t=0) = 0
     y0 = [X0, C0, L0, LE0, E0, S0, N0, V0, 0]
 
     # Test ODEs
@@ -113,11 +113,11 @@ def batchIVPSolver(generate_report=False, solver_id=-1):
     t_span = (0, T)
 
     solver_methods = ['RK45', 'RK23', 'DOP853', 'Radau', 'BDF', 'LSODA']
-    if not generate_report:
+    if generate_report or generate_batch_result_report:
+        solve_ivp_method = solver_methods[solver_id]
+    else:
         print("Choose Solver method: \n0)RK45\n1)RK23\n2)DOP853\n3)Radau\n4)BDF\n5)LSODA")
         solve_ivp_method = solver_methods[int(input("Choice: "))]
-    else:
-        solve_ivp_method = solver_methods[solver_id]
     y = solve_ivp(odes, t_span, y0, t_eval=t, method=solve_ivp_method)
 
     Xf = y.y[0, :]
@@ -142,12 +142,23 @@ def batchIVPSolver(generate_report=False, solver_id=-1):
     EPA_percent_Lipid = E * 100 / L
 
     # EPA produced per amount of S consumed (unit/g)
-    qSXf_integrated = y.y[8, :]
-    EPA_yield = EPAYieldSolver(E, S, qSXf_integrated, t)
+    FS_integrated = y.y[8, :]
+    EPA_yield, S_consumed_extra, S_consumed, EPA_produced = EPAYieldSolver(E, S, FS_integrated, V, t)
     if generate_report:
-        return EPA_yield
+        return EPA_yield, S_consumed_extra, EPA_produced
     print("EPA_yield: ", EPA_yield)
     ###################################################
+
+    if generate_batch_result_report:
+        return {
+                "EPA_Titer": EPA_percent_Biomass[-1],
+                "EPA_Rate": (E[-1]-E[0])/EFT,
+                "EPA_Yield": EPA_yield,
+                "EPA_conc" : E[-1],
+                "Biomass_conc": X[-1],
+                "Lipid_Titer": Lipid_percent_Biomass[-1],
+                "EPA_percent_Lipid": EPA_percent_Lipid[-1]
+        }
 
     # Plotting X
     plot_2D(X, t, figure_name="Biomass(Unit/L)", title="Biomass(Unit/L)", ylabel="X", xlabel="t")

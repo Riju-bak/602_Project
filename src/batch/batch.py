@@ -97,10 +97,10 @@ def batchSolver():
 
         ###############################################################################################################################################
 
-        return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt, qS * Xf]
+        return [dXfdt, dCdt, dLdt, dLEdt, dEdt, dSdt, dNdt, dVdt, FS]
 
     # Initial Conditions
-    # NOTE: qSXf(t=0) = 0
+    # NOTE:FS(t=0) = 0
     y0 = [X0, C0, L0, LE0, E0, S0, N0, V0, 0]
 
     # Test ODEs
@@ -133,8 +133,8 @@ def batchSolver():
     EPA_percent_Lipid = E * 100 / L
 
     # EPA produced per amount of S consumed (unit/g)
-    qSXf_integrated = y[:, 8]
-    print("EPA_yield: ", EPAYieldSolver(E, S, qSXf_integrated, t))
+    FS_integrated = y[:, 8]
+    print("EPA_yield: ", EPAYieldSolver(E, S, FS_integrated, V, t))
     ###################################################
 
     # Plotting X
