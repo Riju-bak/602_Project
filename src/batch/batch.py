@@ -134,7 +134,7 @@ def batchSolver():
 
     # EPA produced per amount of S consumed (unit/g)
     FS_integrated = y[:, 8]
-    print("EPA_yield: ", EPAYieldSolver(E, S, FS_integrated, V, t))
+    print("EPA_yield: ", EPAYieldSolver(E, S, FS_integrated, V, SF, t))
     ###################################################
 
     # Plotting X

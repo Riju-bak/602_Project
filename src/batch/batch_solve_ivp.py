@@ -143,7 +143,7 @@ def batchIVPSolver(generate_batch_result_report=False, generate_report=False, so
 
     # EPA produced per amount of S consumed (unit/g)
     FS_integrated = y.y[8, :]
-    EPA_yield, S_consumed_extra, S_consumed, EPA_produced = EPAYieldSolver(E, S, FS_integrated, V, t)
+    EPA_yield, S_consumed_extra, S_consumed, EPA_produced = EPAYieldSolver(E, S, FS_integrated, V, SF,  t)
     if generate_report:
         return EPA_yield, S_consumed_extra, EPA_produced
     print("EPA_yield: ", EPA_yield)
