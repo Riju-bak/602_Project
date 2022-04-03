@@ -3,7 +3,7 @@ import pandas as pd
 
 
 def generate_yield_report():
-    f = open("./yield_report.txt", "w+")
+    f = open("./reports/yield_report.txt", "w+")
     solverMethods = {
         0: "RK45",
         1: "RK23",
@@ -25,7 +25,7 @@ def generate_yield_report():
     f.close()
 
 def generate_batch_results_report():
-    f = open("./batch_results.txt", "w+")
+    f = open("./reports/batch_results.txt", "w+")
     # EPA_titer, EPA_rate, EPA_Yield = batchIVPSolver(generate_batch_result_report=True)
     solverMethods = {
         0: "RK45",

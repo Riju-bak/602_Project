@@ -161,27 +161,27 @@ def batchIVPSolver(generate_batch_result_report=False, generate_report=False, so
         }
 
     # Plotting X
-    plot_2D(X, t, figure_name="Biomass(Unit/L)", title="Biomass(Unit/L)", ylabel="X", xlabel="t")
+    plot_2D(X, t, figure_name="Biomass", title="Biomass(Unit/L)", ylabel="X", xlabel="time(h)")
 
     # Plotting lipid(% Biomass)
     plot_2D(Lipid_percent_Biomass, t, figure_name="lipid(% Biomass)", title="lipid(% Biomass)", xlabel="time(h)")
 
     # Plotting EPA(% Liquid)
-    plot_2D(EPA_percent_Lipid, t, figure_name="EPA(% Liquid)", title="EPA(% Liquid)", xlabel="time(h)")
+    plot_2D(EPA_percent_Lipid, t, figure_name="EPA(% Lipid)", title="EPA(% Lipid)", xlabel="time(h)")
 
     # Plotting EPA(% Biomass)
     plot_2D(EPA_percent_Biomass, t, figure_name="EPA(% Biomass)", title="EPA(% Biomass)", xlabel="time(h)")
 
     # Plotting EPA_prod(unit/L/h)
-    plot_2D(EPA_prod, t, figure_name="EPA_prod(Unit/L/h)", title="EPA_prod(Unit/L/h)", xlabel="time(h)")
+    plot_2D(EPA_prod, t, figure_name="EPA_prod", title="EPA_prod(Unit/L/h)", xlabel="time(h)")
 
     # Plotting S
-    plot_2D(S, t, figure_name="S vs t", title="S vs t", ylabel="S", xlabel="t")
+    plot_2D(S, t, figure_name="S vs t", title="S vs t", ylabel="S", xlabel="time(h)")
 
     # Plotting N
-    plot_2D(N, t, figure_name="N vs t", title="N vs t", ylabel="N", xlabel="t")
+    plot_2D(N, t, figure_name="N vs t", title="N vs t", ylabel="N", xlabel="time(h)")
 
     # Plotting E
-    plot_2D(E, t, figure_name="E vs t", title="E vs t", ylabel="E", xlabel="t")
+    plot_2D(E, t, figure_name="EPA_conc", title="EPA_conc(Unit/L)", ylabel="E", xlabel="time(h)")
 
     plt.show()

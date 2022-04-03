@@ -1,7 +1,8 @@
 import matplotlib.pyplot as plt
-
+import os, shutil
 
 def plot_2D(y, x, **kwargs):
+    output_folder = "./img/"
     figure_name = kwargs.get("figure_name", "")
     title = kwargs.get("title", "")
     xlabel = kwargs.get("xlabel", "")
@@ -12,3 +13,4 @@ def plot_2D(y, x, **kwargs):
     plt.xlabel(xlabel)
     plt.plot(x, y)
     plt.draw()
+    plt.savefig(os.path.join(output_folder, '%s.png' % figure_name))

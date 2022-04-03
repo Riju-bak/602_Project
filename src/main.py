@@ -11,6 +11,7 @@ def main(argv):
         print("Usage: python main.py [gr]/[gbrr]")
     else:
         batchIVPSolver()
+        generate_batch_results_report()
 
 
 if __name__ == '__main__':
