@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import os, shutil
+import os
 
 def plot_2D(y, x, **kwargs):
     output_folder = "./img/"

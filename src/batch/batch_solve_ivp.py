@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import solve_ivp
-from utils import plot_2D
+from .plotter import plot_2D
 from .epa_yield import EPAYieldSolver
 
 np.seterr(divide='ignore', invalid='ignore')

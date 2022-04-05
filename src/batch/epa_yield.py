@@ -1,4 +1,4 @@
-from utils import find_ind_val
+from .get_ind import find_ind_val
 import numpy as np
 from scipy.integrate import simpson
 
