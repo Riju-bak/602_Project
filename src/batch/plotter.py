@@ -13,4 +13,3 @@ def plot_2D(y, x, **kwargs):
     plt.xlabel(xlabel)
     plt.plot(x, y)
     plt.draw()
-    plt.savefig(os.path.join(output_folder, '%s.png' % figure_name))
