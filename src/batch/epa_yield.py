@@ -1,8 +1,8 @@
 from utils import find_ind_val
 import numpy as np
-from scipy.integrate import simpson, romb
+from scipy.integrate import simpson
 
-def EPAYieldSolver(E, S, FS_integrated, V, SF, t, **kwargs):
+def EPAYieldSolver(E, S, FS_integrated, V, SF, t):
     """This method returns the amount of EPA produced per amount of S consumed (unit/g)"""
     S_20_ind = find_ind_val(S, 20)  # The index at which S becomes 20, used to find the time at which S becomes 20
     FS = np.diff(FS_integrated) / np.diff(t)

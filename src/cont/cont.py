@@ -68,7 +68,7 @@ def continuosSolver():
         data.append((dict(zip(name, value))))
     df = pd.DataFrame(data)
 
-    batch_yield = float(input("STD Batch conversion yield: "))
+    batch_yield = 0.1389
 
          #Solve Non-linear Equations
     for a in range (1, n+1, 1):
@@ -195,5 +195,5 @@ def continuosSolver():
     print(" ")
     print("Evaluation results")
     print(results)
-    print(EPA_rel_yield)
+    print("EPA_rel_yield: ", EPA_rel_yield)
 

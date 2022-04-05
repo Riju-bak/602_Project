@@ -1,11 +1,22 @@
-# 602_Project
-CHE  602 WInter 2022 term project
-## Batch Process
-Run `src/main.py` to start batch simulation
-### EPA Yield
-EPA Yield varies with the integration method used. See `bsivp_report.txt` for exact values 
+# CHE 602 Winter 2022 Project
+This repo contains the source code for CHE  602 Winter 2022 term project.<br>
+
+**Authors**: <br>
+Rijubak Karmakar (20889159) <br>
+Xuan Nguyen (20977357)
+
+## Source code
+All source files can be found in the `src` directory.
+
+## Requirements
+The libraries necessary to run the code.
+1) numpy
+2) scipy
+3) matplotlib
+4) pandas
+
+Run ``python requirements.txt`` in linux terminal or Windows CMD to install all requirements.
 
 
-See `src/batch/epa_yield.py` for more details on how EPA Yield is calculated for the batch process
-
-
+## Usage
+Run `src/main.py` to start simulation

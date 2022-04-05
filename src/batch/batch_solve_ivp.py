@@ -1,55 +1,50 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-from dotenv import load_dotenv
-from scipy.integrate import solve_ivp, simpson
-from utils import find_ind_val, plot_2D
+from scipy.integrate import solve_ivp
+from utils import plot_2D
 from .epa_yield import EPAYieldSolver
 
 np.seterr(divide='ignore', invalid='ignore')
 
 
-def batchIVPSolver(generate_batch_result_report=False, generate_report=False, solver_id=-1):
-    load_dotenv()
-
-    # Kinetic Params
-    KiC = float(os.environ.get("KiC"))
-    KiN = float(os.environ.get("KiN"))
-    KiX = float(os.environ.get("KiX"))
-    KiS = float(os.environ.get("KiS"))
-    KN = float(os.environ.get("KN"))
-    KO1 = float(os.environ.get("KO1"))
-    KO2 = float(os.environ.get("KO2"))
-    KS = float(os.environ.get("KS"))
-    KSE = float(os.environ.get("KSE"))
-    KSL = float(os.environ.get("KSL"))
-    mS = float(os.environ.get("mS"))
-    rE = float(os.environ.get("rE"))
-    rL = float(os.environ.get("rL"))
-    YCS = float(os.environ.get("YCS"))
-    YLS = float(os.environ.get("YLS"))
-    YXN = float(os.environ.get("YXN"))
-    YXS = float(os.environ.get("YXS"))
-    aE = float(os.environ.get("aE"))
-    aL = float(os.environ.get("aL"))
-    bCmax = float(os.environ.get("bCmax"))
-    mu_max = float(os.environ.get("mu_max"))
+def batchIVPSolver():
+    # Kinetic parameters
+    KiC = 1.15
+    KiN = 0.073
+    KiX = 152
+    KiS = 100
+    KN = 0.033
+    KO1 = 0.65
+    KO2 = 5.5
+    KS = 0.077
+    KSE = 0.0032
+    KSL = 0.021
+    mS = 0.012
+    rE = 0.31
+    rL = 0.78
+    YCS = 0.89
+    YLS = 0.47
+    YXN = 27.0
+    YXS = 1.52
+    aE = 0.002
+    aL = 0.017
+    bCmax = 0.09
+    mu_max = 0.26
 
     # Init vals
-    SF = float(os.environ.get("SF"))
-    O0 = float(os.environ.get("O0"))
-    O = O0  # O is assumed constant
-
-    S0 = float(os.environ.get("S0"))
-    N0 = float(os.environ.get("N0"))
-    X0 = float(os.environ.get("X0"))
-    V0 = float(os.environ.get("V0"))
-    L0 = float(os.environ.get("L0"))
-    E0 = float(os.environ.get("E0"))
-    LE0 = float(os.environ.get("LE0"))
-    C0 = float(os.environ.get("C0"))
-
-    # OUR0 = float(os.environ.get("OUR0"))
+    S0 = 47.6
+    N0 = 7.58
+    O0 = 25
+    X0 = 1
+    SF = 700
+    V0 = 1.05
+    L0 = 0
+    E0 = 0
+    LE0 = 0
+    C0 = 0
+    OUR0 = 0
+    O = O0
 
     def odes(t, y):
         # assign each ODE to a vector elem
@@ -112,13 +107,7 @@ def batchIVPSolver(generate_batch_result_report=False, generate_report=False, so
     t = np.linspace(0, T, T_split)
     t_span = (0, T)
 
-    solver_methods = ['RK45', 'RK23', 'DOP853', 'Radau', 'BDF', 'LSODA']
-    if generate_report or generate_batch_result_report:
-        solve_ivp_method = solver_methods[solver_id]
-    else:
-        print("Choose Solver method: \n0)RK45\n1)RK23\n2)DOP853\n3)Radau\n4)BDF\n5)LSODA")
-        solve_ivp_method = solver_methods[int(input("Choice: "))]
-    y = solve_ivp(odes, t_span, y0, t_eval=t, method=solve_ivp_method)
+    y = solve_ivp(odes, t_span, y0, t_eval=t, method='LSODA')
 
     Xf = y.y[0, :]
     C = y.y[1, :]
@@ -143,22 +132,9 @@ def batchIVPSolver(generate_batch_result_report=False, generate_report=False, so
 
     # EPA produced per amount of S consumed (unit/g)
     FS_integrated = y.y[8, :]
-    EPA_yield, S_consumed_extra, S_consumed, EPA_produced = EPAYieldSolver(E, S, FS_integrated, V, SF,  t)
-    if generate_report:
-        return EPA_yield, S_consumed_extra, EPA_produced
+    EPA_yield, S_consumed_extra, S_consumed, EPA_produced = EPAYieldSolver(E, S, FS_integrated, V, SF, t)
     print("EPA_yield: ", EPA_yield)
     ###################################################
-
-    if generate_batch_result_report:
-        return {
-                "EPA_Titer": EPA_percent_Biomass[-1],
-                "EPA_Rate": (E[-1]-E[0])/EFT,
-                "EPA_Yield": EPA_yield,
-                "EPA_conc" : E[-1],
-                "Biomass_conc": X[-1],
-                "Lipid_Titer": Lipid_percent_Biomass[-1],
-                "EPA_percent_Lipid": EPA_percent_Lipid[-1]
-        }
 
     # Plotting X
     plot_2D(X, t, figure_name="Biomass", title="Biomass(Unit/L)", ylabel="X", xlabel="time(h)")
