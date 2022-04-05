@@ -2,8 +2,8 @@ from .batch_solve_ivp import batchIVPSolver
 import pandas as pd
 
 
-def generate_yield_report():
-    f = open("./reports/yield_report.txt", "w+")
+def generate_batch_yield_report():
+    f = open("./reports/batch_yield_report.txt", "w+")
     solverMethods = {
         0: "RK45",
         1: "RK23",
