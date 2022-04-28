@@ -15,7 +15,7 @@ The libraries necessary to run the code.
 3) matplotlib
 4) pandas
 
-Run ``python requirements.txt`` in linux terminal or Windows CMD to install all requirements.
+Run ``pip install -r requirements.txt`` in Linux/macOS terminal or Windows command-prompt to install all requirements.
 
 
 ## Usage
